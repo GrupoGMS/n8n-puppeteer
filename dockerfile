@@ -2,40 +2,33 @@ FROM n8nio/n8n:latest
 
 USER root
 
-# Atualiza repositórios
-RUN apk update
-
-# Instala dependências do Chromium
+# Instala APENAS Chromium e dependências (SEM nodejs/npm)
 RUN apk add --no-cache \
     chromium \
-    chromium-chromedriver \
     nss \
     freetype \
-    freetype-dev \
     harfbuzz \
     ca-certificates \
-    ttf-freefont \
-    font-noto-emoji \
-    nodejs \
-    npm
+    ttf-freefont
 
-# Instala Puppeteer sem baixar Chromium (usa o do sistema)
+# Configura Puppeteer para usar Chromium do sistema
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-RUN npm install -g puppeteer --unsafe-perm=true --allow-root
+# Instala Puppeteer usando o npm que JÁ EXISTE na imagem
+RUN npm install -g puppeteer --unsafe-perm=true
 
-# Cria diretório e ajusta permissões
+# Ajusta permissões
 RUN mkdir -p /home/node/.n8n && \
-    chown -R node:node /home/node/.n8n && \
-    chmod 755 /home/node/.n8n
+    chown -R node:node /home/node/.n8n
 
 # Volta para usuário node
 USER node
 
-# Variável de ambiente para ignorar warning de permissões
+# Ignora warning de permissões
 ENV N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
 
 EXPOSE 5678
 
+# Comando original do n8n (que já existe!)
 CMD ["n8n"]
