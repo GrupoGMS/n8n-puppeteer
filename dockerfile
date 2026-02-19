@@ -2,32 +2,36 @@ FROM n8nio/n8n:latest
 
 USER root
 
-# Instala Chromium e dependências
+# Instala Chromium e dependências essenciais
 RUN apk add --no-cache \
     chromium \
     nss \
     freetype \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    font-noto-emoji
 
-# Configura Puppeteer
+# Define variáveis de ambiente para Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+    CHROME_BIN=/usr/bin/chromium-browser \
+    CHROME_PATH=/usr/bin/chromium-browser
 
-# Instala Puppeteer no diretório correto do n8n
-RUN cd /usr/local/lib/node_modules/n8n && \
-    npm install puppeteer --unsafe-perm=true
+# Instala Puppeteer dentro do node_modules global
+RUN npm install --prefix /usr/local/lib/node_modules/n8n puppeteer
 
-# Ajusta permissões
-RUN chown -R node:node /usr/local/lib/node_modules/n8n
+# Cria link simbólico para que o require funcione
+RUN cd /usr/local/lib/node_modules && \
+    ln -sf n8n/node_modules/puppeteer puppeteer
 
+# Permissões corretas
+RUN chown -R node:node /usr/local/lib/node_modules
+
+# Volta para usuário node
 USER node
-
-WORKDIR /home/node
 
 EXPOSE 5678
 
-# Usa o caminho completo do n8n
-CMD ["/usr/local/bin/n8n"]
+# Inicia n8n normalmente
+CMD ["n8n"]
