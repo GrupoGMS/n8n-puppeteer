@@ -1,37 +1,31 @@
-FROM n8nio/n8n:latest
+FROM n8nio/n8n:latest-debian
 
 USER root
 
-# Instala Chromium e dependências essenciais
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    font-noto-emoji
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
-# Define variáveis de ambiente para Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    CHROME_BIN=/usr/bin/chromium-browser \
-    CHROME_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
-# Instala Puppeteer dentro do node_modules global
-RUN npm install --prefix /usr/local/lib/node_modules/n8n puppeteer
+RUN npm install puppeteer
 
-# Cria link simbólico para que o require funcione
-RUN cd /usr/local/lib/node_modules && \
-    ln -sf n8n/node_modules/puppeteer puppeteer
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# Permissões corretas
-RUN chown -R node:node /usr/local/lib/node_modules
-
-# Volta para usuário node
 USER node
-
-EXPOSE 5678
-
-# Inicia n8n normalmente
-CMD ["n8n"]
